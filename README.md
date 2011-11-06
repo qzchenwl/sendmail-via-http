@@ -1,6 +1,6 @@
 **An easy way to send mail via http GET/POST request**
 
-**Usage:**
+Usage:
 
     curl http://localhost:8000/mailto/<email>/<subject> -d "<content>"
 
