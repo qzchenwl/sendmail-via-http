@@ -7,11 +7,12 @@ import           Snap.Core
 import           Snap.Http.Server
 import           Snap.Util.FileServe
 import           System.ShQQ
-import           Data.Int
 import           Network.CGI (liftIO)
-import           Data.Maybe (fromJust)
+import           Control.Applicative ((<$>))
+import           Data.Int
+import           Data.Maybe (fromMaybe)
 import qualified Data.ByteString.Lazy.Char8 as L (unpack)
-import qualified Data.ByteString.Char8 as S (unpack)
+import qualified Data.ByteString.Char8 as S (unpack, pack)
 
 main :: IO ()
 main = quickHttpServe $
@@ -23,13 +24,15 @@ main = quickHttpServe $
 
 sendMailHandler :: Snap()
 sendMailHandler = do
-    receiver <- getParam "receiver"
-    subject  <- getParam "subject"
+    receiver <- decodeParam "receiver"
+    subject  <- decodeParam "subject"
     body     <- readRequestBody (maxBound :: Int64)
-    liftIO $ sendMail (S.unpack $ fromJust receiver)
-                      (S.unpack $ fromJust subject)
-                      (L.unpack body)
-    writeBS "mail sent\n"
+    result <- liftIO $ sendMail (S.unpack receiver)
+                                (S.unpack subject)
+                                (L.unpack body)
+    writeBS $ S.pack result
+  where
+    decodeParam p = fromMaybe "" <$> getParam p
 
 sendMail :: String -> String -> String -> IO String
 sendMail receiver subject body =
